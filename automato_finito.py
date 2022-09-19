@@ -1,3 +1,6 @@
+from itertools import product
+
+
 class AutomatoFinito:
     def __init__(self, K=[], sigma=[], delta=[], s=None, F=[], nome=''):
         self.K = K
@@ -248,3 +251,119 @@ class AutomatoFinito:
                 if t not in estado:
                     estado.append(t)
         return estado
+
+    def minimiza(self):
+        # Processo para gerar um AutomatoFinito minimizado equivalente
+        print("Autômato original:")
+        self.visualiza()
+
+        # Determiniza o autômato
+        AFD = self.getAFD()
+
+        # Remove estados inalcancaveis
+        estados_inalcancaveis = AFD.K.copy()
+        estados_inalcancaveis.remove(AFD.s)
+        proximos_estados = [AFD.s]
+        while proximos_estados:
+            estado_atual = proximos_estados.pop()
+            for simbolo in AFD.sigma:
+                for estado in AFD.getTransicao(estado_atual, simbolo):
+                    if estado in estados_inalcancaveis:
+                        estados_inalcancaveis.remove(estado)
+                        proximos_estados.append(estado)
+        estados_alcancaveis = list(set(AFD.K.copy()).difference(set(estados_inalcancaveis)))
+
+        # Remove estados mortos
+        estados_vivos = AFD.F.copy()
+        proximos_estados = estados_vivos.copy()
+        while proximos_estados:
+            estado_atual = proximos_estados.pop()
+            for simbolo in AFD.sigma:
+                for estado in AFD.getTransicaoReversa(estado_atual, simbolo):
+                    if estado not in estados_vivos:
+                        estados_vivos.append(estado)
+                        proximos_estados.append(estado)
+        estados_vivos_alcancaveis = list(set(estados_vivos).intersection(set(estados_alcancaveis)))
+
+        # Cria classes de equivalencia
+        '''
+        Definicao:
+        Um conjunto de estados pertencem a memsa classe de equivalencia se
+        para cada simbolo, a transicoes de cada estado do conjunto pelo simbolo
+        resulta a elementos de uma mesma classe de equivalencia.
+
+        Algoritmo: ToExplain
+        '''
+        classes_equivalentes = [set(estados_vivos_alcancaveis).difference(set(AFD.F)), set(AFD.F).intersection(set(estados_vivos_alcancaveis))]
+        while True:
+            classes_novas = []
+            particao = [[[] for coluna in range(len(classes_equivalentes))] for coluna in range(len(AFD.sigma))]
+            for simbolo_indice, simbolo in enumerate(AFD.sigma):
+                for estado in estados_vivos_alcancaveis:
+                    existe_equivalencia = AFD.getTransicao(estado, simbolo)
+                    if len(existe_equivalencia) == 0:
+                        continue
+                    existe_equivalencia = existe_equivalencia[0]
+                    for classe_indice, classe_equivalente in enumerate(classes_equivalentes):
+                        if existe_equivalencia in classe_equivalente:
+                            particao[simbolo_indice][classe_indice].append(estado)
+                            break
+                    else:
+                        print("Erro na minimizacao")
+            particao_iterador = iter(particao)
+            grupo_classe_equivalente = next(particao_iterador)
+            for grupo_simbolo in particao_iterador:
+                novo_grupo_classe_equivalente = [set(particao_equivalente_a).intersection(set(particao_equivalente_b)) \
+                                        for particao_equivalente_a in grupo_simbolo for particao_equivalente_b in grupo_classe_equivalente \
+                                        if set(particao_equivalente_a).intersection(set(particao_equivalente_b))]
+                grupo_classe_equivalente = novo_grupo_classe_equivalente
+
+            if len(grupo_classe_equivalente) - len(classes_equivalentes) == 0:
+                classes_equivalentes = grupo_classe_equivalente
+                break
+            else:
+                classes_equivalentes = grupo_classe_equivalente
+
+        # Cria Automato
+        K = [str(classe_equivalente) for classe_equivalente in classes_equivalentes]
+        S = ""
+        for classe_equivalente in classes_equivalentes:
+            if AFD.s in classe_equivalente:
+                S = str(classe_equivalente)
+                break
+        F = [str(classe_equivalente_F) for f in set(AFD.F).intersection(set(estados_vivos_alcancaveis)) \
+                for classe_equivalente_F in classes_equivalentes if f in classe_equivalente_F]
+        delta = []
+        for classe_equivalente in classes_equivalentes:
+            for simbolo in AFD.sigma:
+                existe_equivalencia = AFD.getTransicao(list(classe_equivalente)[0], simbolo)[0]
+                for outras_classes in classes_equivalentes:
+                    if existe_equivalencia in outras_classes:
+                        transicoes = [str(classe_equivalente), simbolo, str(outras_classes)]
+                        delta.append(transicoes)
+                        break
+
+        # Correção nomes dos estados
+        for estado_nome in [K, F]:
+            for i, k in enumerate(estado_nome):
+                print(i, k)
+                estado_nome[i] = str(k).replace("'", "").replace('"', "")
+        for d in delta:
+            for i, k in enumerate(d):
+                print("-------------")
+                print(i, k)
+                d[i] = str(k).replace("'", "").replace('"', "")
+        S = str(S).replace("'", "").replace('"', "")
+
+        return AutomatoFinito(K, self.sigma, delta, S, F)
+
+    def getTransicaoReversa(self, estado, simbolo):
+        """Retorna estados que transitam para 'estado' por 'simbolo'"""
+        transicoes = []
+        for transicao in self.delta:
+            if transicao[2] == estado and transicao[1] == simbolo:
+                transicoes.append(transicao[0])
+        return transicoes
+
+def uniao(af1, af2):
+    pass

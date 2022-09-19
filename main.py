@@ -10,6 +10,8 @@ while True:
     print("3 - Exportar autômato")
     print("4 - Remover autômato")
     print("5 - Determinizar autômato")
+    print("6 - Minimizar autômato")
+    print("7 - Unir autômatos")
     print("0 - Encerrar execução")
     opcao = int(input("\nEntre com uma opção: "))
 
@@ -103,6 +105,70 @@ while True:
             afd.nome = input("\nNome do novo autômato: ")
             automatos.append(afd)
             print(f"Autômato {afd.nome} inserido")
+
+    elif opcao == 6:
+        print("### Minimizar autômato ###")
+        for i, a in enumerate(automatos):
+            print(f"{i + 1} - {a.nome}")
+
+        try:
+            id = int(input("Escolha o autômato: ")) - 1
+            assert (id in range(0, len(automatos)))
+        except:
+            print("Valor inválido")
+            continue
+
+        afd = automatos[id].minimiza()
+
+        print(f"Autômato {automatos[id].nome} minimizado:\n")
+        afd.visualiza()
+
+        salvar = input("Salvar resultado (s/n)? ").strip()
+
+        if salvar == 's':
+            afd.nome = input("Nome do novo autômato: ")
+            automatos.append(afd)
+
+            print(f"Autômato {afd.nome} inserido")
+
+    elif opcao == 7:
+        print("### Unir autômatos ###")
+
+        for i, a in enumerate(automatos):
+            print(f"{i + 1} - {a.nome}")
+        try:
+            id1 = int(input("Escolha primeiro o autômato: ")) - 1
+            assert (id1 in range(0, len(automatos)))
+        except:
+            print("Valor inválido")
+            continue
+
+        for i, a in enumerate(automatos):
+            if i == id1: continue
+            print(f"{i + 1}- {a.nome}")
+        try:
+            id2 = int(input("Escolha segundo o autômato: ")) - 1
+            assert (id2 in range(0, len(automatos)))
+        except:
+            print("Valor inválido")
+            continue
+
+        print(f"{automatos[id1].nome}:\n")
+        automatos[id1].visualiza()
+        print(f"{automatos[id2].nome}:\n")
+        automatos[id2].visualiza()
+
+        print("Resultado da união:")
+        af_uniao = uniao(automatos[id1], automatos[id2])
+        af_uniao.visualiza()
+
+        salvar = input("Salvar resultado (s/n)? ").strip()
+
+        if salvar == 's':
+            af_uniao.nome = input("Nome do novo autômato: ")
+            automatos.append(af_uniao)
+
+            print(f"Autômato {af_uniao.nome} inserido")
 
     elif opcao == 0:
         break
