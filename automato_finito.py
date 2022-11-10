@@ -169,9 +169,9 @@ class AutomatoFinito:
         # Verifica se autômato já é determinístico
         breakFor = True
         if '&' not in self.sigma:
-            for state in self.K:
+            for estado in self.K:
                 for s in self.sigma:
-                    if len(self.getTransicao(state, s)) > 1:
+                    if len(self.getTransicao(estado, s)) > 1:
                         breakFor = True
                         break
                 if breakFor:
@@ -188,8 +188,8 @@ class AutomatoFinito:
 
         delta = []
         s = f"{'{'}"
-        for state in self.getEpsilon([self.s]):
-            s += f"{state}, "
+        for estado in self.getEpsilon([self.s]):
+            s += f"{estado}, "
         s = s[:-2] + f"{'}'}"
         F = []
 
@@ -198,33 +198,33 @@ class AutomatoFinito:
 
         # Calcula o novo estado
         for k in K:
-            for symbol in self.sigma:
-                if symbol == '&':
+            for simbolo in self.sigma:
+                if simbolo == '&':
                     continue
 
-                newState = []
-                for state in k: 
-                    for t in self.getTransicao(state, symbol):
-                        if t not in newState:
-                            newState.append(t)
+                novo_estado = []
+                for estado in k: 
+                    for t in self.getTransicao(estado, simbolo):
+                        if t not in novo_estado:
+                            novo_estado.append(t)
 
                 # Obtém transições por epsilon para o novo estado
-                newState = self.getEpsilon(newState)
+                novo_estado = self.getEpsilon(novo_estado)
 
-                if not len(newState):
+                if not len(novo_estado):
                     continue
 
                 # Insere transição em string
                 strk = str(k).replace("'", '').replace('[', '{').replace(']', '}')
-                strNewState = str(newState).replace("'", '').replace('[', '{').replace(']', '}')
-                delta.append((strk, symbol, strNewState))
+                strNewestado = str(novo_estado).replace("'", '').replace('[', '{').replace(']', '}')
+                delta.append((strk, simbolo, strNewestado))
 
                 # Insere novo estado se ele ainda não existir
                 for k0 in K:
-                    if set(newState) == set(k0):
+                    if set(novo_estado) == set(k0):
                         break
                     if k0 == K[-1]:
-                        K.append(newState)
+                        K.append(novo_estado)
 
         # Define estados finais
         for k in K:
@@ -366,4 +366,86 @@ class AutomatoFinito:
         return transicoes
 
 def uniao(af1, af2):
-    pass
+    """Utiliza o produto cartesiano para gerar a união de dois AFDs"""
+    af1_F, af2_F, af1_K, af2_K, af_produto = produto_cartesiano(af1, af2)
+    uniao_final = list(set(product(af1_F, af2_K)) | set(product(af1_K, af2_F)))
+    af_produto.F = uniao_final
+    produto_formatado(af_produto)
+    return af_produto
+
+def string_tupla(x): 
+    return '{' + f'{x[0]},{x[1]}' + '}'
+
+def produto_formatado(af):
+    """Formatador para tuplas usadas no produto cartesiano"""
+
+    af.K = list(map(string_tupla, af.K))
+    af.F = list(map(string_tupla, af.F))
+    af.s = string_tupla(af.s)
+    delta = list(zip(*af.delta))
+    delta[0] = list(map(string_tupla, delta[0]))
+    delta[2] = list(map(string_tupla, delta[2]))
+    af.delta = list(zip(*delta))
+
+def produto_cartesiano(af1, af2, cria_estado_morto=True):
+    """
+    Calcula o produto cartesiano de dois autômatos finitos.
+    Método auxiliar para os algoritmos de construção da união e interseção
+    de AFDs por produto cartesiano (Sipser, 1.25).
+    Presume-se que os AFs de entrada (af1 e af2) sejam determinísticos.
+    """
+
+    # Atualiza nomes de estados, para garantir que não haverão estados com nomes repetidos
+    if len(set(af1.K).intersection(set(af2.K))) > 0:
+        print('AFDs têm estados com nomes iguais. Renomeando estados.')
+        estados_iguais = True
+        af1_K = [estado + '-1' for estado in af1.K]
+        af2_K = [estado + '-2' for estado in af2.K]
+        af1_F = [estado + '-1' for estado in af1.F]
+        af2_F = [estado + '-2' for estado in af2.F]
+        s = (af1.s + '-1', af2.s + '-2')
+    else:
+        estados_iguais = False
+        af1_K = af1.K
+        af2_K = af2.K
+        af1_F = af1.F
+        af2_F = af2.F
+        s = (af1.s, af2.s)
+
+    # Se alguma transição para o morto não for explícita, temos que explicitá-la.
+    if not cria_estado_morto:
+        af1_K.append('morto-1')
+        af2_K.append('morto-2')
+
+    # Cria conjunto de valores de entrada
+    sigma = list(set(i for i in af1.sigma + af2.sigma))
+    # Cria conjunto de estados possíveis de serem usados
+    uniao_K = list(product(af1_K, af2_K))
+
+    # Define transições
+    delta = []
+    for q1, q2 in uniao_K:
+        for simbolo in sigma:
+            try:
+                if estados_iguais:
+                    t1 = af1.getTransicao(q1[:-2], simbolo)
+                    t2 = af2.getTransicao(q2[:-2], simbolo)
+                else:
+                    t1 = af1.getTransicao(q1, simbolo)
+                    t2 = af2.getTransicao(q2, simbolo)
+                # se len > 1, o autômato não é determinístico; se
+                assert (len(t1) <= 1 and len(t2) <= 1)
+            except AssertionError:
+                print("Ao menos um FA de entrada não era determinístico.")
+                print("Use algoritmo de determinização antes de continuar :)")
+            # direcionamos para o morto as transições que não forem explícitas
+            if not t1:
+                t1 = ['morto-1']
+            if not t2:
+                t2 = ['morto-2']
+            transition = (t1[0] + '-1', t2[0] +
+                          '-2') if estados_iguais else (t1[0], t2[0])
+            delta.append(((q1, q2), simbolo, transition))
+    af_produto = AutomatoFinito(uniao_K, sigma, delta, s)
+    return af1_F, af2_F, af1_K, af2_K, af_produto
+

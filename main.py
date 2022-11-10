@@ -1,4 +1,4 @@
-from automato_finito import AutomatoFinito
+from automato_finito import AutomatoFinito, uniao
 
 automatos = []
 gramaticas = []
@@ -12,10 +12,11 @@ while True:
     print("5 - Determinizar autômato")
     print("6 - Minimizar autômato")
     print("7 - Unir autômatos")
+    print("8 - Converter ER para AFD")
     print("0 - Encerrar execução")
-    opcao = int(input("\nEntre com uma opção: "))
+    opcao = input("\nEntre com uma opção: ")
 
-    if opcao == 1:
+    if opcao == '1':
         print("### Importar autômato ###")
         arquivo = input("Nome do arquivo: ")
         nome = input("Nome do novo autômato: ")
@@ -31,7 +32,7 @@ while True:
         automatos.append(automato_finito)
         print(f"Autômato {automato_finito.nome} importado com sucesso")
 
-    elif opcao == 2:
+    elif opcao == '2':
         print("### Visualizar autômato ###")
         for i, a in enumerate(automatos):
             print(f"{i + 1} - {a.nome}")
@@ -46,7 +47,7 @@ while True:
         print(f"\nTabela de transição de {automatos[id].nome}:\n")
         automatos[id].visualiza()
 
-    elif opcao == 3:
+    elif opcao == '3':
         print("### Exportar autômato ###")
         for i, a in enumerate(automatos):
             print(f"{i + 1} - {a.nome}")
@@ -62,7 +63,7 @@ while True:
 
         print(f"Autômato {nome} exportado")
 
-    elif opcao == 4:
+    elif opcao == '4':
         print("### Remover autômato ###")
         for i, a in enumerate(automatos):
             print(f"{i + 1}- {a.nome}")
@@ -82,10 +83,10 @@ while True:
 
         print(f"Autômato {nome} removido")
 
-    elif opcao == 5:
+    elif opcao == '5':
         print("### Determinizar autômato ###")
         for i, a in enumerate(automatos):
-            print(f"{i + 1}- {a.nome}")
+            print(f"{i + 1} - {a.nome}")
 
         try:
             id = int(input("\nEscolha o autômato: ")) - 1
@@ -106,7 +107,7 @@ while True:
             automatos.append(afd)
             print(f"Autômato {afd.nome} inserido")
 
-    elif opcao == 6:
+    elif opcao == '6':
         print("### Minimizar autômato ###")
         for i, a in enumerate(automatos):
             print(f"{i + 1} - {a.nome}")
@@ -131,7 +132,7 @@ while True:
 
             print(f"Autômato {afd.nome} inserido")
 
-    elif opcao == 7:
+    elif opcao == '7':
         print("### Unir autômatos ###")
 
         for i, a in enumerate(automatos):
@@ -170,7 +171,24 @@ while True:
 
             print(f"Autômato {af_uniao.nome} inserido")
 
-    elif opcao == 0:
+    elif opcao == '8':
+        print(f"### Converter expressão regular para autômato finito determinístico ###")
+
+        er = input("Digite a expressão regular: ").strip()
+
+        af = AutomatoFinito()
+        # af.leitura_er(er)
+
+        print("\nConversão para autômato finito: ")
+        # af.visualiza()
+
+        save = input("Deseja salvar o autômato (s/n)? ").strip()
+
+        if save == 's':
+            af.nome = input("Digite o nome do novo autômato: ").strip()
+            automatos.append(af)
+
+    elif opcao == '0':
         break
 
     else:
