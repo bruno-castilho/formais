@@ -177,10 +177,10 @@ while True:
         er = input("Digite a expressão regular: ").strip()
 
         af = AutomatoFinito()
-        # af.leitura_er(er)
+        af.leitura_er(er)
 
         print("\nConversão para autômato finito: ")
-        # af.visualiza()
+        af.visualiza()
 
         save = input("Deseja salvar o autômato (s/n)? ").strip()
 

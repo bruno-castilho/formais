@@ -1,5 +1,5 @@
 from itertools import product
-
+from arvore import No
 
 class AutomatoFinito:
     def __init__(self, K=[], sigma=[], delta=[], s=None, F=[], nome=''):
@@ -165,7 +165,6 @@ class AutomatoFinito:
         arq.close()
 
     def getAFD(self):
-        """A partir de "self", retorna um AFD equivalente"""
         # Verifica se autômato já é determinístico
         breakFor = True
         if '&' not in self.sigma:
@@ -215,9 +214,9 @@ class AutomatoFinito:
                     continue
 
                 # Insere transição em string
-                strk = str(k).replace("'", '').replace('[', '{').replace(']', '}')
-                strNewestado = str(novo_estado).replace("'", '').replace('[', '{').replace(']', '}')
-                delta.append((strk, simbolo, strNewestado))
+                string_K = str(k).replace("'", '').replace('[', '{').replace(']', '}')
+                string_novo_estado = str(novo_estado).replace("'", '').replace('[', '{').replace(']', '}')
+                delta.append((string_K, simbolo, string_novo_estado))
 
                 # Insere novo estado se ele ainda não existir
                 for k0 in K:
@@ -244,12 +243,12 @@ class AutomatoFinito:
         return AutomatoFinito(K, sigma, delta, s, F)
 
     def getEpsilon(self, estado):
-        """Retorna transições por epsilon a partir de 'estado'"""
-        for e in estado:
+        # Retorna transições por epsilon a partir de estado
+        for e in estado: # Para cada estado
             transicao_epsilon = self.getTransicao(e, '&')
-            for t in transicao_epsilon:
-                if t not in estado:
-                    estado.append(t)
+            for t in transicao_epsilon: # Para cada transição por epsilon
+                if t not in estado: # Se o estado não estiver na lista de estados
+                    estado.append(t) # Adiciona o estado na lista
         return estado
 
     def minimiza(self):
@@ -265,13 +264,13 @@ class AutomatoFinito:
         estados_inalcancaveis.remove(AFD.s)
         proximos_estados = [AFD.s]
         while proximos_estados:
-            estado_atual = proximos_estados.pop()
+            estado_atual = proximos_estados.pop() # Pega o primeiro elemento da lista
             for simbolo in AFD.sigma:
                 for estado in AFD.getTransicao(estado_atual, simbolo):
                     if estado in estados_inalcancaveis:
                         estados_inalcancaveis.remove(estado)
-                        proximos_estados.append(estado)
-        estados_alcancaveis = list(set(AFD.K.copy()).difference(set(estados_inalcancaveis)))
+                        proximos_estados.append(estado) # Adiciona o estado na lista de proximos estados
+        estados_alcancaveis = list(set(AFD.K.copy()).difference(set(estados_inalcancaveis))) # Remove os estados inalcancaveis do conjunto de estados
 
         # Remove estados mortos
         estados_vivos = AFD.F.copy()
@@ -287,17 +286,13 @@ class AutomatoFinito:
 
         # Cria classes de equivalencia
         '''
-        Definicao:
         Um conjunto de estados pertencem a memsa classe de equivalencia se
         para cada simbolo, a transicoes de cada estado do conjunto pelo simbolo
         resulta a elementos de uma mesma classe de equivalencia.
-
-        Algoritmo: ToExplain
         '''
         classes_equivalentes = [set(estados_vivos_alcancaveis).difference(set(AFD.F)), set(AFD.F).intersection(set(estados_vivos_alcancaveis))]
         while True:
-            classes_novas = []
-            particao = [[[] for coluna in range(len(classes_equivalentes))] for coluna in range(len(AFD.sigma))]
+            particao = [[[] for _ in range(len(classes_equivalentes))] for _ in range(len(AFD.sigma))]
             for simbolo_indice, simbolo in enumerate(AFD.sigma):
                 for estado in estados_vivos_alcancaveis:
                     existe_equivalencia = AFD.getTransicao(estado, simbolo)
@@ -339,7 +334,7 @@ class AutomatoFinito:
                 existe_equivalencia = AFD.getTransicao(list(classe_equivalente)[0], simbolo)[0]
                 for outras_classes in classes_equivalentes:
                     if existe_equivalencia in outras_classes:
-                        transicoes = [str(classe_equivalente), simbolo, str(outras_classes)]
+                        transicoes = [str(classe_equivalente), simbolo, str(outras_classes)] # Transição
                         delta.append(transicoes)
                         break
 
@@ -347,7 +342,7 @@ class AutomatoFinito:
         for estado_nome in [K, F]:
             for i, k in enumerate(estado_nome):
                 print(i, k)
-                estado_nome[i] = str(k).replace("'", "").replace('"', "")
+                estado_nome[i] = str(k).replace("'", "").replace('"', "") # Remove aspas simples e duplas
         for d in delta:
             for i, k in enumerate(d):
                 print("-------------")
@@ -358,15 +353,74 @@ class AutomatoFinito:
         return AutomatoFinito(K, self.sigma, delta, S, F)
 
     def getTransicaoReversa(self, estado, simbolo):
-        """Retorna estados que transitam para 'estado' por 'simbolo'"""
+        # Retorna estados que transitam para  o estado por simbolo
         transicoes = []
         for transicao in self.delta:
-            if transicao[2] == estado and transicao[1] == simbolo:
-                transicoes.append(transicao[0])
+            if transicao[2] == estado and transicao[1] == simbolo: # Se o estado de destino for o estado e o simbolo for o mesmo
+                transicoes.append(transicao[0]) # Adiciona o estado de origem na lista de transicoes
         return transicoes
 
+    def leitura_er(self, er):
+        # Cria autômato de acordo com expressão regular
+        er = f"({er}).#"
+        arvore = No.getArvore(er)  # Determina árvore sintática
+        arvore.calcula_followpos()  # Calcula followpos dos nós
+
+        # Inicializa estados_desmarcados contendo somente a raiz
+        estados_desmarcados = [arvore.calcula_firstpos()]
+        S = [arvore.calcula_firstpos()]
+        transicoes_desmarcadas = []
+        todos_simbolos = set()
+        desmarcados = [arvore.calcula_firstpos()]
+        while len(desmarcados) != 0:  # Enquanto houver um símbolo desmarcado S em estados_desmarcados
+            S = desmarcados.pop(0)  # Marca S como marcado
+
+            simbolos = set() # Inicializa conjunto de símbolos
+            for a in S:
+                simbolos = simbolos.union(set([a.nome]))
+
+            todos_simbolos = todos_simbolos.union(simbolos)
+
+            for simbolo_entrada in simbolos:  # Para cada símbolo de entrada
+                D = set()  # Inicializa conjunto de estados D
+                for p in S:  # Para cada posição p em S
+                    if p.nome == simbolo_entrada:  # Se o símbolo de entrada é igual ao símbolo de p
+                        D = D.union(p.followpos)  # União followpos(p) a D
+                if D not in estados_desmarcados:  # Se D não está em estados_desmarcados
+                    estados_desmarcados.append(D)  # Adiciona D a estados_desmarcados
+                    desmarcados.append(D)
+                if (S, simbolo_entrada, D) not in transicoes_desmarcadas:  # Se (S, a, D) não está em transicoes_desmarcadas
+                    transicoes_desmarcadas.append((S, simbolo_entrada, D)) # Cria transição
+
+        for transicao in transicoes_desmarcadas:  # Remove estado morto
+            estado, simbolo, seguinte = transicao
+            if simbolo == '#':
+                estados_desmarcados.remove(seguinte)
+                break
+
+        # Cria automato
+        self.K = [f"q{i}" for i in range(len(estados_desmarcados))]
+        self.S = self.K[0]
+        self.delta = []
+        self.F = []
+
+        for transicao in transicoes_desmarcadas: 
+            estado, simbolo, seguinte = transicao # Desempacota transição
+
+            estado_string = self.K[estados_desmarcados.index(estado)] # Converte estado para string
+            if simbolo == '#':
+                if estado_string not in self.F: # Se estado não é final
+                    self.F.append(estado_string) # Adiciona estado como final
+            else:
+                newTransition = (estado_string, simbolo, self.K[estados_desmarcados.index(seguinte)])
+                self.delta.append(newTransition)
+        self.sigma = list(todos_simbolos) # Converte conjunto de símbolos para lista
+        self.sigma.remove('#') # Remove símbolo vazio
+
+        self = self.getAFD() # Converte para AFD
+
 def uniao(af1, af2):
-    """Utiliza o produto cartesiano para gerar a união de dois AFDs"""
+    # União de dois AFDs utilizando o produto cartesiano
     af1_F, af2_F, af1_K, af2_K, af_produto = produto_cartesiano(af1, af2)
     uniao_final = list(set(product(af1_F, af2_K)) | set(product(af1_K, af2_F)))
     af_produto.F = uniao_final
@@ -374,28 +428,23 @@ def uniao(af1, af2):
     return af_produto
 
 def string_tupla(x): 
-    return '{' + f'{x[0]},{x[1]}' + '}'
+    return '{' + f'{x[0]},{x[1]}' + '}' # Formata tupla para string
 
 def produto_formatado(af):
-    """Formatador para tuplas usadas no produto cartesiano"""
+    # Formatação do produto cartesiano
 
-    af.K = list(map(string_tupla, af.K))
+    af.K = list(map(string_tupla, af.K)) 
     af.F = list(map(string_tupla, af.F))
     af.s = string_tupla(af.s)
-    delta = list(zip(*af.delta))
+    delta = list(zip(*af.delta)) # Desempacota delta
     delta[0] = list(map(string_tupla, delta[0]))
     delta[2] = list(map(string_tupla, delta[2]))
-    af.delta = list(zip(*delta))
+    af.delta = list(zip(*delta)) # Empacota delta
 
 def produto_cartesiano(af1, af2, cria_estado_morto=True):
-    """
-    Calcula o produto cartesiano de dois autômatos finitos.
-    Método auxiliar para os algoritmos de construção da união e interseção
-    de AFDs por produto cartesiano (Sipser, 1.25).
-    Presume-se que os AFs de entrada (af1 e af2) sejam determinísticos.
-    """
+    # É necessário que os automatos de entrada (af1 e af2) sejam determinísticos.
 
-    # Atualiza nomes de estados, para garantir que não haverão estados com nomes repetidos
+    # Verifica se há estados com mesmo nome
     if len(set(af1.K).intersection(set(af2.K))) > 0:
         print('AFDs têm estados com nomes iguais. Renomeando estados.')
         estados_iguais = True
@@ -403,7 +452,7 @@ def produto_cartesiano(af1, af2, cria_estado_morto=True):
         af2_K = [estado + '-2' for estado in af2.K]
         af1_F = [estado + '-1' for estado in af1.F]
         af2_F = [estado + '-2' for estado in af2.F]
-        s = (af1.s + '-1', af2.s + '-2')
+        s = (af1.s + '-1', af2.s + '-2') # Sufixo -1 para af1 e -2 para af2
     else:
         estados_iguais = False
         af1_K = af1.K
@@ -433,19 +482,20 @@ def produto_cartesiano(af1, af2, cria_estado_morto=True):
                 else:
                     t1 = af1.getTransicao(q1, simbolo)
                     t2 = af2.getTransicao(q2, simbolo)
-                # se len > 1, o autômato não é determinístico; se
+                # Se tamanho > 1, o autômato não é determinístico
                 assert (len(t1) <= 1 and len(t2) <= 1)
             except AssertionError:
-                print("Ao menos um FA de entrada não era determinístico.")
-                print("Use algoritmo de determinização antes de continuar :)")
-            # direcionamos para o morto as transições que não forem explícitas
-            if not t1:
+                print("Um dos autômatos não é determinístico.")
+
+            # Se não há transição, cria-se estado morto
+            if not t1: 
                 t1 = ['morto-1']
             if not t2:
                 t2 = ['morto-2']
-            transition = (t1[0] + '-1', t2[0] +
-                          '-2') if estados_iguais else (t1[0], t2[0])
-            delta.append(((q1, q2), simbolo, transition))
+            
+            # Adiciona sufixo se estados iguais
+            transicao = (t1[0] + '-1', t2[0] + '-2') if estados_iguais else (t1[0], t2[0])
+            delta.append(((q1, q2), simbolo, transicao))
     af_produto = AutomatoFinito(uniao_K, sigma, delta, s)
     return af1_F, af2_F, af1_K, af2_K, af_produto
 
