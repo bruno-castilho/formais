@@ -1,0 +1,15 @@
+11
+q0
+q0,q1,q3,q4,q6,q8
+a,b
+q0,b,q2
+q1,a,q3
+q1,b,q4
+q3,a,q5
+q3,b,q6
+q4,a,q7
+q4,b,q8
+q6,a,q9
+q6,b,q10
+q8,a,q5
+q8,b,q6

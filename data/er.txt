@@ -1,0 +1,5 @@
+er1: a(a|b)*a
+er2: aa*(bb*aa*b)*
+er3: (& | b)(ab)*(& | a)
+er4: a?(a | b)+
+er5: a?ab+

@@ -1,195 +1,92 @@
-from automato_finito import AutomatoFinito, uniao
+import argparse
+from analisador import AnalisadorLexico
+from er import ER
 
-automatos = []
-gramaticas = []
-
-while True:
-    print("### Analisador Léxico e Sintático ###")
-    print("1 - Importar autômato")
-    print("2 - Visualizar autômato")
-    print("3 - Exportar autômato")
-    print("4 - Remover autômato")
-    print("5 - Determinizar autômato")
-    print("6 - Minimizar autômato")
-    print("7 - Unir autômatos")
-    print("8 - Converter ER para AFD")
-    print("0 - Encerrar execução")
-    opcao = input("\nEntre com uma opção: ")
-
-    if opcao == '1':
-        print("### Importar autômato ###")
-        arquivo = input("Nome do arquivo: ")
-        nome = input("Nome do novo autômato: ")
+#Retorna argumentos da linha da comando
+def getArgumentos():
+        parser = argparse.ArgumentParser(prog='ANALISADOR')
+        subparsers = parser.add_subparsers(metavar='subcomando', title='subcommands', help='help',dest='subcomando')
 
 
-        automato_finito = AutomatoFinito(nome=nome)
-        try:
-            automato_finito.leitura(f"es/{arquivo}")
-        except:
-            print("Não foi possível importar o autômato")
-            continue
+        #Cria 'parser' para o sub-command 'lexico' 
+        parser_lexico = subparsers.add_parser('lexico', help='lexico -h')
+        parser_lexico.add_argument('opcao', metavar='opcao', choices=['projeto', 'execucao'], help='choices: {projeto,execucao}')
+        parser_lexico.add_argument('-i','--input', metavar='',type=str,help='arquivo de entrada (default: ./)')
+        parser_lexico.add_argument('-o','--output', metavar='',type=str,help='diretorio de saida (default: ./)')
 
-        automatos.append(automato_finito)
-        print(f"Autômato {automato_finito.nome} importado com sucesso")
+        #Cria 'parser' para o sub-command 'sintatico' 
+        parser_sintatico = subparsers.add_parser('sintatico', help='sintatico -h')
+        parser_sintatico.add_argument('-i','--input', metavar='',type=str, help='arquivo de entrada (default: ./)')
+        parser_sintatico.add_argument('-o','--output', metavar='',type=str, help='diretorio de saida (default: ./)')
 
-    elif opcao == '2':
-        print("### Visualizar autômato ###")
-        for i, a in enumerate(automatos):
-            print(f"{i + 1} - {a.nome}")
 
-        try:
-            id = int(input("\nEscolha o autômato: ")) - 1
-            assert (id in range(0, len(automatos)))
-        except:
-            print("Identificador inválido")
-            continue
+        return  parser.parse_args()
 
-        print(f"\nTabela de transição de {automatos[id].nome}:\n")
-        automatos[id].visualiza()
+#Retorna lista de ojetos ER
+def lerERs(input):
+        ref_arquivo = open(input,"r")
 
-    elif opcao == '3':
-        print("### Exportar autômato ###")
-        for i, a in enumerate(automatos):
-            print(f"{i + 1} - {a.nome}")
+        ers = []
+        #Ajusta as ERs e cria objeto ER
+        for linha in ref_arquivo:
+            valores = linha.replace("\n", "")
+            valores = valores.replace(' ', '')
+            valores = valores.split(":")
+            ers.append(ER(valores[0], valores[1]))
 
-        try:
-            id = int(input("\nEscolha o autômato: ")) - 1
-            assert (id in range(0, len(automatos)))
-        except:
-            print("Valor inválido")
-            continue
-        nome = automatos[id].nome
-        automatos[id].salva(f"es/{nome}.txt")
+        return ers
 
-        print(f"Autômato {nome} exportado")
+#Retorna lista de ojetos AF
+def erParaAFD(ERs, output):
+        AFDs = []
+        for er in ERs:
+            nome = er.getNome()
+            tree = AnalisadorLexico.getArvore(er.getEr())    
+            tree.calcula_followpos()
+            AFD = AnalisadorLexico.erParaAFD(nome,tree)
+            AFD.exporta(f'{output}/AFD-{nome}.txt')
+            AFDs.append(AFD)
 
-    elif opcao == '4':
-        print("### Remover autômato ###")
-        for i, a in enumerate(automatos):
-            print(f"{i + 1}- {a.nome}")
+        return AFDs
 
-        try:
-            id = int(input("\nEscolha o autômato (0 para cancelar): ")) - 1
-            assert (id in range(-1, len(automatos)))
-        except:
-            print("Valor inválido")
-            continue
+#Retorna objeto AutomatoFinito
+def AFDAnalisadorLexico(AFDs, output):
+        af_uniao = AFDs[0]
+        for i in range(1, len(AFDs)):
+            af_uniao = AnalisadorLexico.uniao(af_uniao, AFDs[i])
+            af_uniao.determinizar()
 
-        if id < 0:
-            continue
+        af_uniao.ajustaEstados()
+        af_uniao.exporta(f'{output}/AFD-ERs.txt')
 
-        nome = automatos[id].nome
-        del automatos[id]
+        return af_uniao
 
-        print(f"Autômato {nome} removido")
+def main():
+    #Pega os argumentos da linha de comando
+    args = getArgumentos()
 
-    elif opcao == '5':
-        print("### Determinizar autômato ###")
-        for i, a in enumerate(automatos):
-            print(f"{i + 1} - {a.nome}")
+    #Verifica subcomando
+    if args.subcomando == 'lexico':
+        if args.opcao == 'projeto':
+            #default --input 
+            if not args.input: args.input = './data/er.txt'
+            #default --output 
+            if not args.output: args.output = './data'
 
-        try:
-            id = int(input("\nEscolha o autômato: ")) - 1
-            assert (id in range(0, len(automatos)))
-        except:
-            print("Valor inválido")
-            continue
+            #Lê ERs do arquivo 
+            ERs = lerERs(args.input)
+            #ER -> AFD
+            AFDs = erParaAFD(ERs, args.output)
+            #Gera AFD para Analise léxica
+            AFD = AFDAnalisadorLexico(AFDs, args.output)
+           
+        if args.opcao == 'execucao':
+            print('"Lexico execucao" em construção')
 
-        afd = automatos[id].getAFD()
-
-        print(f"Autômato {automatos[id].nome} determinizado:\n")
-        afd.visualiza()
-
-        salvar = input("\nSalvar resultado (s/n)? ").strip()
-
-        if salvar == 's':
-            afd.nome = input("\nNome do novo autômato: ")
-            automatos.append(afd)
-            print(f"Autômato {afd.nome} inserido")
-
-    elif opcao == '6':
-        print("### Minimizar autômato ###")
-        for i, a in enumerate(automatos):
-            print(f"{i + 1} - {a.nome}")
-
-        try:
-            id = int(input("Escolha o autômato: ")) - 1
-            assert (id in range(0, len(automatos)))
-        except:
-            print("Valor inválido")
-            continue
-
-        afd = automatos[id].minimiza()
-
-        print(f"Autômato {automatos[id].nome} minimizado:\n")
-        afd.visualiza()
-
-        salvar = input("Salvar resultado (s/n)? ").strip()
-
-        if salvar == 's':
-            afd.nome = input("Nome do novo autômato: ")
-            automatos.append(afd)
-
-            print(f"Autômato {afd.nome} inserido")
-
-    elif opcao == '7':
-        print("### Unir autômatos ###")
-
-        for i, a in enumerate(automatos):
-            print(f"{i + 1} - {a.nome}")
-        try:
-            id1 = int(input("Escolha primeiro o autômato: ")) - 1
-            assert (id1 in range(0, len(automatos)))
-        except:
-            print("Valor inválido")
-            continue
-
-        for i, a in enumerate(automatos):
-            if i == id1: continue
-            print(f"{i + 1}- {a.nome}")
-        try:
-            id2 = int(input("Escolha segundo o autômato: ")) - 1
-            assert (id2 in range(0, len(automatos)))
-        except:
-            print("Valor inválido")
-            continue
-
-        print(f"{automatos[id1].nome}:\n")
-        automatos[id1].visualiza()
-        print(f"{automatos[id2].nome}:\n")
-        automatos[id2].visualiza()
-
-        print("Resultado da união:")
-        af_uniao = uniao(automatos[id1], automatos[id2])
-        af_uniao.visualiza()
-
-        salvar = input("Salvar resultado (s/n)? ").strip()
-
-        if salvar == 's':
-            af_uniao.nome = input("Nome do novo autômato: ")
-            automatos.append(af_uniao)
-
-            print(f"Autômato {af_uniao.nome} inserido")
-
-    elif opcao == '8':
-        print(f"### Converter expressão regular para autômato finito determinístico ###")
-
-        er = input("Digite a expressão regular: ").strip()
-
-        af = AutomatoFinito()
-        af.leitura_er(er)
-
-        print("\nConversão para autômato finito: ")
-        af.visualiza()
-
-        save = input("Deseja salvar o autômato (s/n)? ").strip()
-
-        if save == 's':
-            af.nome = input("Digite o nome do novo autômato: ").strip()
-            automatos.append(af)
-
-    elif opcao == '0':
-        break
-
+    elif args.subcomando == 'sintatico':
+         print('"Sintatico" em construção')
     else:
-        continue
+        print('Subcomando invalido')
+
+main()
+

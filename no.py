@@ -7,60 +7,13 @@ class No:
         self.lastpos = None
         self.followpos = set()
 
-    def visualiza(self):
+    def visualizar(self):
         if len(self.filhos) == 0:
             return f"{self.nome}"
         elif len(self.filhos) == 1:
-            return f"{self.nome} > ({self.filhos[0].visualiza()})"
+            return f"{self.nome} > ({self.filhos[0].visualizar()})"
         else:
-            return f"{self.nome} > ({self.filhos[0].visualiza()}, {self.filhos[1].visualiza()})"
-
-    @staticmethod
-    def getArvore(er): 
-
-        # Procura por operador e retorna parte esquerda e direita.
-        def procura_operadores(operador): 
-            direita, esquerda = '', ''
-            parenteses = 0
-            for i in range(len(er)-1, -1, -1):   # Varre ER da direita para esquerda
-                # Verifica se encontrou o operador fora de qualquer parenteses
-                if er[i] == operador and parenteses == 0:
-                    esquerda = er[:i]
-                    return esquerda, direita[::-1]
-                
-                # Contagem de parenteses
-                if er[i] == ')':
-                    parenteses += 1
-                elif er[i] == '(':
-                    parenteses -= 1
-
-                direita += er[i]
-            
-            return esquerda, direita[::-1]
-
-        
-        esquerda, direita = procura_operadores('|')   # Procura por operador |
-        if esquerda != "":
-            # Retorna nó | com filhos da esquerda e direita calculados recursivamente
-            return No("|", [No.getArvore(esquerda), No.getArvore(direita)])
-        
-        esquerda, direita = procura_operadores('.')   # Procura por operador .
-        if esquerda != "":
-            # Retorna nó . com filhos da esquerda e direita calculados recursivamente
-            return No(".", [No.getArvore(esquerda), No.getArvore(direita)])
-        
-        esquerda, direita = procura_operadores('*')   # Procura por operador *
-        if esquerda != "":
-            # Retorna nó * com filho calculado recursivamente
-            return No("*", [No.getArvore(esquerda)])
-        
-        # Verifica se a expressão é algo entre parenteses
-        if er[0] == "(" and er[-1] == ")":
-            # Calcula recursivamente a árvore da expressão entre parenteses
-            return No.getArvore(er[1:-1])
-
-        return No(er)  # Nó não possui operadores, então é final
-    
+            return f"{self.nome} > ({self.filhos[0].visualizar()}, {self.filhos[1].visualizar()})"
 
     # Retorna se nó é nullable.
     def verifica_nulo(self):
@@ -81,7 +34,7 @@ class No:
     
     # Calcula firstpos
     def calcula_firstpos(self):
-        if self.firstpos is not None:  # Verifica de firstpos já foi calculado
+        if self.firstpos is not None:  # Verifica se firstpos já foi calculado
             return self.firstpos
 
         # Calcula firstpos
@@ -136,3 +89,7 @@ class No:
             for i in self.calcula_lastpos():
                 # Todas as posições em firstpos estão em followpos
                 i.followpos = i.followpos.union(self.calcula_firstpos())
+
+
+
+
