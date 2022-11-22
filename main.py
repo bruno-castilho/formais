@@ -1,6 +1,7 @@
 import argparse
 from analisador import AnalisadorLexico
 from er import ER
+from glc import GLC
 
 #Retorna argumentos da linha da comando
 def getArgumentos():
@@ -11,12 +12,13 @@ def getArgumentos():
         #Cria 'parser' para o sub-command 'lexico' 
         parser_lexico = subparsers.add_parser('lexico', help='lexico -h')
         parser_lexico.add_argument('opcao', metavar='opcao', choices=['projeto', 'execucao'], help='choices: {projeto,execucao}')
-        parser_lexico.add_argument('-i','--input', metavar='',type=str,help='arquivo de entrada (default: ./)')
+        parser_lexico.add_argument('-i','--input', metavar='',type=str,help='arquivo de input (default: ./)')
         parser_lexico.add_argument('-o','--output', metavar='',type=str,help='diretorio de saida (default: ./)')
 
         #Cria 'parser' para o sub-command 'sintatico' 
         parser_sintatico = subparsers.add_parser('sintatico', help='sintatico -h')
-        parser_sintatico.add_argument('-i','--input', metavar='',type=str, help='arquivo de entrada (default: ./)')
+        parser_sintatico.add_argument('opcao', metavar='opcao', choices=['projeto', 'execucao'], help='choices: {projeto,execucao}')
+        parser_sintatico.add_argument('-i','--input', metavar='',type=str, help='arquivo de input (default: ./)')
         parser_sintatico.add_argument('-o','--output', metavar='',type=str, help='diretorio de saida (default: ./)')
 
 
@@ -84,7 +86,28 @@ def main():
             print('"Lexico execucao" em construção')
 
     elif args.subcomando == 'sintatico':
-         print('"Sintatico" em construção')
+        if args.opcao == 'projeto':
+            #default --input 
+            if not args.input: args.input = './data/gramatica.txt'
+            #default --output 
+            # if not args.output: args.output = './data'
+
+            #Lê Gramática do arquivo
+            gramatica = GLC.lerGramatica(args.input)
+
+            #Elimina recursão a esquerda
+            gramatica = GLC.eliminaRecursaoEsquerda(gramatica)
+
+            #Fatora gramática
+            gramatica = GLC.fatora(gramatica)
+
+            lePilha = input('\nEntrada: ')
+            print('\nEntrada válida!' if gramatica.lerEntradaLL(lePilha) else '\nEntrada inválida!')
+
+            # AFD = AFDAnalisadorLexico(AFDs, args.output)
+
+        if args.opcao == 'execucao':
+            print('"Lexico execucao" em construção')
     else:
         print('Subcomando invalido')
 
