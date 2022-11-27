@@ -1,0 +1,9 @@
+FOR i RECEBE 0 i MENORIGUAL 9 i MAIS MAIS
+    print i
+
+teste1 RECEBE  8
+WHILE i MAIOR 0
+    IF i IGUAL 0
+        print  teste1
+    
+    i MENOS MENOS

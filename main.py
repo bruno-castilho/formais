@@ -2,24 +2,49 @@ import argparse
 from analisador import AnalisadorLexico
 from er import ER
 from glc import GLC
+from automatofinito import AutomatoFinito
+
 
 #Retorna argumentos da linha da comando
 def getArgumentos():
         parser = argparse.ArgumentParser(prog='ANALISADOR')
         subparsers = parser.add_subparsers(metavar='subcomando', title='subcommands', help='help',dest='subcomando')
 
+        
 
         #Cria 'parser' para o sub-command 'lexico' 
-        parser_lexico = subparsers.add_parser('lexico', help='lexico -h')
-        parser_lexico.add_argument('opcao', metavar='opcao', choices=['projeto', 'execucao'], help='choices: {projeto,execucao}')
-        parser_lexico.add_argument('-i','--input', metavar='',type=str,help='arquivo de input (default: ./)')
-        parser_lexico.add_argument('-o','--output', metavar='',type=str,help='diretorio de saida (default: ./)')
+        descricao_lexema = """
+########################## ANALISADOR LÉXICO ##########################
+PROJETO:
+   Busca por expressões regulares em um arquivo de texto e gera
+   AFD das mesmas. Fas a união dos autómatos e gera AFND e AFD.
+ 
+   Necessário:
+       --expressoes #Arquivo de texto contendo as expressões regulares.
+ 
+EXECUCAO:  
+   Le programa texto e valida cada lexema encontrado. Para cada lexema válido,
+   imprime no arquivo tokens.txt junto com seu token. Lexemas não validos são
+   apresentados no terminal.
+ 
+   Necessário:
+       --automato  #Arquivo que descreve o AF.
+       --programa  #Arquivo com programa texto.
+       --palavras  #Arquivo com palavras reservadas.              
+        """
+        parser_lexico = subparsers.add_parser('lexico', help='lexico -h', description = descricao_lexema, formatter_class=argparse.RawTextHelpFormatter)
+        parser_lexico.add_argument('opcao', metavar='opcao', choices=['PROJETO', 'EXECUCAO'], help='choices: {PROJETO,EXECUCAO}')
+        parser_lexico.add_argument('-e','--expressoes', metavar='',type=str,help='arquivo de entrada (default: ./data/er.txt)')
+        parser_lexico.add_argument('-a','--automato', metavar='',type=str,help='arquivo de entrada (default: ./data/AFD.txt)')
+        parser_lexico.add_argument('-p','--programa', metavar='',type=str,help='arquivo de entrada (default: ./data/program.txt)')
+        parser_lexico.add_argument('-w','--palavras', metavar='',type=str,help='arquivo de entrada (default: ./data/palavras_reservadas.txt)')
+        parser_lexico.add_argument('-o','--output', metavar='',type=str,help='diretorio de saida (default: ./data)')
 
         #Cria 'parser' para o sub-command 'sintatico' 
         parser_sintatico = subparsers.add_parser('sintatico', help='sintatico -h')
         parser_sintatico.add_argument('opcao', metavar='opcao', choices=['projeto', 'execucao'], help='choices: {projeto,execucao}')
-        parser_sintatico.add_argument('-i','--input', metavar='',type=str, help='arquivo de input (default: ./)')
-        parser_sintatico.add_argument('-o','--output', metavar='',type=str, help='diretorio de saida (default: ./)')
+        parser_sintatico.add_argument('-i','--input', metavar='',type=str, help='arquivo de input (default: ./data)')
+        parser_sintatico.add_argument('-o','--output', metavar='',type=str, help='diretorio de saida (default: ./data)')
 
 
         return  parser.parse_args()
@@ -34,18 +59,74 @@ def lerERs(input):
             valores = linha.replace("\n", "")
             valores = valores.replace(' ', '')
             valores = valores.split(":")
+            
             ers.append(ER(valores[0], valores[1]))
 
+        ref_arquivo.close()
         return ers
+
+#Retorna lista de string
+def lerLexemas(input):     
+        ref_arquivo = open(input,"r")
+
+        lexemas = []
+        #Ajusta as ERs e cria objeto ER
+        for linha in ref_arquivo:
+            valores = linha.replace("\n", '')
+            valores = valores.strip()
+            if valores != '':
+                for lexema in valores.split(' '):
+                    if lexema != '':
+                        lexemas.append(lexema)
+            
+        ref_arquivo.close()
+
+        return lexemas
+
+#Retorna AFD
+def LerAutomato(input):
+        ref_arquivo = open(input,"r")
+        n_estados = ref_arquivo.readline()
+        estado_inicial = ref_arquivo.readline().rstrip('\n')
+        estados_finais = ref_arquivo.readline().rstrip('\n').split(',')
+        simbolos_entrada = ref_arquivo.readline().rstrip('\n').split(',')
+        todos_estados = []
+        transicoes = []
+
+        for value in ref_arquivo:
+            value = value.rstrip('\n').split(',')
+            transicoes.append(value)
+
+            if value[0] not in todos_estados:
+                todos_estados.append(value[0])
+
+            if value[2] not in todos_estados:
+                todos_estados.append(value[2])
+
+
+        return  AutomatoFinito(todos_estados, simbolos_entrada, transicoes, estado_inicial, estados_finais, 'Meu Automato')
+
+#Retorna dicionario
+def LerPalavrasReservadas(input):
+    ref_arquivo = open(input,"r")
+    dic = {}
+    for value in ref_arquivo:
+        value = value.rstrip('\n').strip().split(':')
+        dic[value[0]] = value[1].replace(' ','').split(',')
+
+    ref_arquivo.close()
+    return dic
 
 #Retorna lista de ojetos AF
 def erParaAFD(ERs, output):
         AFDs = []
         for er in ERs:
             nome = er.getNome()
-            tree = AnalisadorLexico.getArvore(er.getEr())    
+            er = f"({er.getEr()})"
+            tree = AnalisadorLexico.getArvore(er)    
             tree.calcula_followpos()
             AFD = AnalisadorLexico.erParaAFD(nome,tree)
+            AFD.ajustarAutomato('Q')
             AFD.exporta(f'{output}/AFD-{nome}.txt')
             AFDs.append(AFD)
 
@@ -53,37 +134,102 @@ def erParaAFD(ERs, output):
 
 #Retorna objeto AutomatoFinito
 def AFDAnalisadorLexico(AFDs, output):
+       
         af_uniao = AFDs[0]
         for i in range(1, len(AFDs)):
             af_uniao = AnalisadorLexico.uniao(af_uniao, AFDs[i])
-            af_uniao.determinizar()
 
-        af_uniao.ajustaEstados()
-        af_uniao.exporta(f'{output}/AFD-ERs.txt')
+        af_uniao.ajustarAutomato('Q')
+        af_uniao.exporta(f'{output}/AFND.txt')
+        af_uniao.determinizar()
+        af_uniao.ajustarAutomato('Q')
+        af_uniao.exporta(f'{output}/AFD.txt')
 
         return af_uniao
 
+#Retorna lexemas validados 
+def verificarLexemas(af,l):
+     lexemas = []
+     for lexema in l:
+          if af.computar(lexema):
+               lexemas.append(lexema)
+          else:
+               print(f'lexema não valido: {lexema}')
+               
+     return lexemas
+
+#Retorna tokens e lexemas encontrados
+def buscarTokens(lexemas, tokens_lexemas):
+    dic = {}
+    for lexema in lexemas:  
+        id = True
+        for token in tokens_lexemas:
+           if lexema in tokens_lexemas[token]:
+                if token in dic.keys():
+                     dic[token] = dic[token] + [lexema]
+                else:
+                     dic[token] = [lexema]
+
+                id = False
+                break
+           
+        if id:              
+            if 'ID' in dic.keys():
+                dic['ID'] = dic['ID'] + [lexema]
+            else:
+                dic['ID'] = [lexema]
+             
+    return dic
+
+#Escreve arquivo com tokens e lexemas:
+def escreverTokens(tokens_lexemas, output):
+     ref_arquivo = open(f'{output}/tokens.txt', "w")
+
+     for token in tokens_lexemas.keys():
+          for lexema in tokens_lexemas[token]:
+            string = token + ':' + lexema
+            ref_arquivo.write(str(string) + "\n")
+               
+     
 def main():
     #Pega os argumentos da linha de comando
     args = getArgumentos()
+    #default --output 
+    if not args.output: args.output = './data'
 
     #Verifica subcomando
     if args.subcomando == 'lexico':
-        if args.opcao == 'projeto':
-            #default --input 
-            if not args.input: args.input = './data/er.txt'
-            #default --output 
-            if not args.output: args.output = './data'
+        if args.opcao == 'PROJETO':
+            #default --exprecao 
+            if not args.expressoes: args.expressoes = './data/er.txt'
 
             #Lê ERs do arquivo 
-            ERs = lerERs(args.input)
+            ERs = lerERs(args.expressoes)
             #ER -> AFD
             AFDs = erParaAFD(ERs, args.output)
             #Gera AFD para Analise léxica
             AFD = AFDAnalisadorLexico(AFDs, args.output)
            
-        if args.opcao == 'execucao':
-            print('"Lexico execucao" em construção')
+        if args.opcao == 'EXECUCAO':
+            #default --automato
+            if not args.automato: args.automato = './data/AFD.txt'
+            #default --programa
+            if not args.programa: args.programa = './data/programa.txt'
+            #default --palavras
+            if not args.palavras: args.palavras = './data/palavras_reservadas.txt'
+
+            program = './data/programa.txt'
+
+            #Ler lexemas
+            lexemas = lerLexemas(args.programa)
+            #Testar todos os lexemas no AFD
+            AFD = LerAutomato(args.automato)
+            lexemas = verificarLexemas(AFD,lexemas)
+            #Buscar tokens dos lexemas em palavras_reservadas.txt
+            tokens_lexemas = LerPalavrasReservadas(args.palavras) #Dic
+            tokens_lexemas = buscarTokens(lexemas, tokens_lexemas) #Dic
+            #Imprime arquivo tokens.txt
+            escreverTokens(tokens_lexemas, args.output)
 
     elif args.subcomando == 'sintatico':
         if args.opcao == 'projeto':

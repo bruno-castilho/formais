@@ -1,19 +1,23 @@
 class No:
-    def __init__(self, nome, filhos=[]):
+    def __init__(self,nome, filhos=[]):
         self.nome = nome
         self.filhos = filhos
+
         self.nulo = None
+        self.verifica_nulo()
+
         self.firstpos = None
         self.lastpos = None
+        
         self.followpos = set()
-
+    
     def visualizar(self):
         if len(self.filhos) == 0:
-            return f"{self.nome}"
+            return f"{self.nome}({self.nulo})"
         elif len(self.filhos) == 1:
-            return f"{self.nome} > ({self.filhos[0].visualizar()})"
+            return f"{self.nome}({self.nulo}) > ({self.filhos[0].visualizar()})"
         else:
-            return f"{self.nome} > ({self.filhos[0].visualizar()}, {self.filhos[1].visualizar()})"
+            return f"{self.nome}({self.nulo}) > ({self.filhos[0].visualizar()}, {self.filhos[1].visualizar()})"
 
     # Retorna se nó é nullable.
     def verifica_nulo(self):
@@ -42,6 +46,7 @@ class No:
             self.firstpos = set()
         elif self.nome == '|':
             self.firstpos = self.filhos[0].calcula_firstpos().union(self.filhos[1].calcula_firstpos())
+            
         elif self.nome == '.':
             if self.filhos[0].verifica_nulo():
                 self.firstpos = self.filhos[0].calcula_firstpos().union(self.filhos[1].calcula_firstpos())
@@ -80,7 +85,7 @@ class No:
     def calcula_followpos(self):
         for filhos in self.filhos: # Faz busca em profundidade para calcular followpos
             filhos.calcula_followpos()
-
+        
         if self.nome == '.': # Se é nó concatenação
             for i in self.filhos[0].calcula_lastpos(): # Para cada posição i em lastpos
                 # Todas as posições em firstpos estão em followpos
@@ -89,7 +94,5 @@ class No:
             for i in self.calcula_lastpos():
                 # Todas as posições em firstpos estão em followpos
                 i.followpos = i.followpos.union(self.calcula_firstpos())
-
-
 
 

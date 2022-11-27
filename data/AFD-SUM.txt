@@ -1,0 +1,12 @@
+9
+Q0
+Q7,Q8
+S,A,N,I,E,O,M
+Q0,M,Q1
+Q1,E,Q2
+Q1,A,Q3
+Q2,N,Q4
+Q3,I,Q5
+Q4,O,Q6
+Q5,S,Q7
+Q6,S,Q8
