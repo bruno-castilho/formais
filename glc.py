@@ -1,6 +1,7 @@
 import sys
 from itertools import chain, groupby, product
 from operator import itemgetter
+from prettytable import PrettyTable
 
 class GLC:
   """
@@ -159,9 +160,35 @@ class GLC:
           if '&' not in firsts:
             break
 
-    print(f"Tabela de análise: {tabela}")
-
     gramatica.tabelaLL = tabela
+    headers = ["  "]
+    linhas = []
+    for (row, cabecalho) in tabela.keys():
+      if str(cabecalho) not in headers:
+        headers.append(str(cabecalho))
+      if str(row) not in linhas:
+        linhas.append(str(row))
+
+    elementos = []
+    for valor in tabela.values():
+        elemento = ' '.join(valor)
+        elementos.append(elemento)
+
+    print(f"Tabela de análise:")
+    for cabecalho in headers:
+      print(f"| {cabecalho}\t\t", end="")
+    print()
+    for j in range(len(linhas)):
+      linha = []
+      linha.append(linhas[j])
+      linha.append(elementos[0: len(linhas)])
+      del elementos[0: len(linhas)]
+
+      print(f"| {linha[0]}\t\t", end="")
+      for i in linha[1]:
+        print(f"| {i}\t\t", end="")
+      print()
+
     return gramatica
 
   def lerEntradaLL(self, input):
@@ -184,7 +211,9 @@ class GLC:
     pilha = ['$', gramatica.N[0]]
     lePilha = input.pop(0)
 
+    print("Pilha:")
     while True:
+      print(pilha)
       if lePilha == pilha[-1] and lePilha == '$':
         return True
       elif lePilha == pilha[-1] and lePilha != '$':
