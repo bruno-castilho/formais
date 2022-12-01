@@ -32,6 +32,15 @@ EXECUCAO:
        --programa  #Arquivo com programa texto.
        --palavras  #Arquivo com palavras reservadas.              
         """
+        descricao_ll = """
+########################## ANALISADOR SINTÁTICO ##########################
+EXECUCAO:  
+    Le gramatica e verifica e valida se é Livre de Contexto e se é LL(1),
+    elimina a recursão à esquerda e fatora quando necessário, além disso
+    calcula first e follow e utilizando a tabela de analise sintatica e simulação da pilha. 
+   Necessário:
+       --gramatica  #Arquivo que descreve a gramática livre de contexto.
+        """
         parser_lexico = subparsers.add_parser('lexico', help='lexico -h', description = descricao_lexema, formatter_class=argparse.RawTextHelpFormatter)
         parser_lexico.add_argument('opcao', metavar='opcao', choices=['PROJETO', 'EXECUCAO'], help='choices: {PROJETO,EXECUCAO}')
         parser_lexico.add_argument('-e','--expressoes', metavar='',type=str,help='arquivo de entrada (default: ./data/er.txt)')
@@ -41,11 +50,10 @@ EXECUCAO:
         parser_lexico.add_argument('-o','--output', metavar='',type=str,help='diretorio de saida (default: ./data)')
 
         #Cria 'parser' para o sub-command 'sintatico' 
-        parser_sintatico = subparsers.add_parser('sintatico', help='sintatico -h')
-        parser_sintatico.add_argument('opcao', metavar='opcao', choices=['projeto', 'execucao'], help='choices: {projeto,execucao}')
-        parser_sintatico.add_argument('-i','--input', metavar='',type=str, help='arquivo de input (default: ./data)')
-        parser_sintatico.add_argument('-o','--output', metavar='',type=str, help='diretorio de saida (default: ./data)')
-
+        parser_sintatico = subparsers.add_parser('sintatico', help='sintatico -h', description = descricao_ll, formatter_class=argparse.RawTextHelpFormatter)
+        parser_sintatico.add_argument('opcao', metavar='opcao', choices=['EXECUCAO'], help='choices: {EXECUCAO}')
+        parser_sintatico.add_argument('-g','--gramatica', metavar='',type=str, help='arquivo de input (default: ./data/gramatica.txt)')
+        parser_sintatico.add_argument('-o','--output', metavar='',type=str,help='diretorio de saida (default: ./data)')
 
         return  parser.parse_args()
 
@@ -232,14 +240,12 @@ def main():
             escreverTokens(tokens_lexemas, args.output)
 
     elif args.subcomando == 'sintatico':
-        if args.opcao == 'projeto':
-            #default --input 
-            if not args.input: args.input = './data/gramatica.txt'
-            #default --output 
-            # if not args.output: args.output = './data'
+        if args.opcao == 'EXECUCAO':
+            #default --gramatica
+            if not args.gramatica: args.gramatica = './data/gramatica.txt'
 
             #Lê Gramática do arquivo
-            gramatica = GLC.lerGramatica(args.input)
+            gramatica = GLC.lerGramatica(args.gramatica)
 
             #Elimina recursão a esquerda
             gramatica = GLC.eliminaRecursaoEsquerda(gramatica)
@@ -250,10 +256,6 @@ def main():
             lePilha = input('\nEntrada: ')
             print('\nEntrada válida!' if gramatica.lerEntradaLL(lePilha) else '\nEntrada inválida!')
 
-            # AFD = AFDAnalisadorLexico(AFDs, args.output)
-
-        if args.opcao == 'execucao':
-            print('"Lexico execucao" em construção')
     else:
         print('Subcomando invalido')
 

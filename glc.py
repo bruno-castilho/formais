@@ -161,11 +161,11 @@ class GLC:
             break
 
     gramatica.tabelaLL = tabela
-    headers = ["  "]
+    cabecalhos = ["  "]
     linhas = []
     for (row, cabecalho) in tabela.keys():
-      if str(cabecalho) not in headers:
-        headers.append(str(cabecalho))
+      if str(cabecalho) not in cabecalhos:
+        cabecalhos.append(str(cabecalho))
       if str(row) not in linhas:
         linhas.append(str(row))
 
@@ -175,7 +175,7 @@ class GLC:
         elementos.append(elemento)
 
     print(f"Tabela de análise:")
-    for cabecalho in headers:
+    for cabecalho in cabecalhos:
       print(f"| {cabecalho}\t\t", end="")
     print()
     for j in range(len(linhas)):
