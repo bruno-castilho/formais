@@ -17,7 +17,7 @@ def getArgumentos():
 ########################## ANALISADOR LÉXICO ##########################
 PROJETO:
    Busca por expressões regulares em um arquivo de texto e gera
-   AFD das mesmas. Fas a união dos autómatos e gera AFND e AFD.
+   AFD das mesmas. Faz a união dos autómatos e gera AFND e AFD.
  
    Necessário:
        --expressoes #Arquivo de texto contendo as expressões regulares.
@@ -53,6 +53,7 @@ EXECUCAO:
         parser_sintatico = subparsers.add_parser('sintatico', help='sintatico -h', description = descricao_ll, formatter_class=argparse.RawTextHelpFormatter)
         parser_sintatico.add_argument('opcao', metavar='opcao', choices=['EXECUCAO'], help='choices: {EXECUCAO}')
         parser_sintatico.add_argument('-g','--gramatica', metavar='',type=str, help='arquivo de input (default: ./data/gramatica.txt)')
+        parser_sintatico.add_argument('-s','--sentenca', metavar='',type=str, help='arquivo de input (default: ./data/sentenca.txt)')
         parser_sintatico.add_argument('-o','--output', metavar='',type=str,help='diretorio de saida (default: ./data)')
 
         return  parser.parse_args()
@@ -90,6 +91,20 @@ def lerLexemas(input):
         ref_arquivo.close()
 
         return lexemas
+
+#Retorna lista de sentencas
+def lerSentencas(input):     
+        ref_arquivo = open(input,"r")
+
+        sentencas = []
+        #Ajusta as ERs e cria objeto ER
+        for linha in ref_arquivo:
+            if linha != '':
+                sentencas.append(linha)
+            
+        ref_arquivo.close()
+
+        return sentencas
 
 #Retorna AFD
 def LerAutomato(input):
@@ -243,6 +258,7 @@ def main():
         if args.opcao == 'EXECUCAO':
             #default --gramatica
             if not args.gramatica: args.gramatica = './data/gramatica.txt'
+            if not args.sentenca: args.sentenca = './data/sentenca.txt'
 
             #Lê Gramática do arquivo
             gramatica = GLC.lerGramatica(args.gramatica)
@@ -253,8 +269,11 @@ def main():
             #Fatora gramática
             gramatica = GLC.fatora(gramatica)
 
-            lePilha = input('\nEntrada: ')
-            print('\nEntrada válida!' if gramatica.lerEntradaLL(lePilha) else '\nEntrada inválida!')
+            #Ler sentencas
+            sentencas = lerSentencas(args.sentenca)
+            for sentenca in sentencas:
+                print(f"Sentença: {sentenca}")
+                print('\nEntrada válida!\n\n' if gramatica.lerEntradaLL(sentenca) else '\nEntrada inválida!\n\n')
 
     else:
         print('Subcomando invalido')
