@@ -40,6 +40,7 @@ EXECUCAO:
     calcula first e follow e utilizando a tabela de analise sintatica e simulação da pilha. 
    Necessário:
        --gramatica  #Arquivo que descreve a gramática livre de contexto.
+       --sentenca  #Arquivo que contem as sentencas.
         """
         parser_lexico = subparsers.add_parser('lexico', help='lexico -h', description = descricao_lexema, formatter_class=argparse.RawTextHelpFormatter)
         parser_lexico.add_argument('opcao', metavar='opcao', choices=['PROJETO', 'EXECUCAO'], help='choices: {PROJETO,EXECUCAO}')
