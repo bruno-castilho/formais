@@ -1,9 +1,16 @@
-FOR i RECEBE 0 i MENORIGUAL 9 i MAIS MAIS
-    print i
+PROGRAM meuprograma
+    FOR i RECEBE 0 i MENORIGUAL 9 i MAIS MAIS 
+        print i ;
+    END
 
-teste1 RECEBE  8
-WHILE i MAIOR 0
-    IF i IGUAL 0
-        print  teste1
-    
-    i MENOS MENOS
+    teste1 RECEBE  teste1 MAIS 8 MAIS 2 ;
+    teste2 RECEBE  teste1 MENOR 9 ;
+
+    WHILE i MAIOR 0 
+        IF i IGUAL 0
+            print  teste1 ;
+        END
+        
+        i MENOS MENOS ;
+    END
+END

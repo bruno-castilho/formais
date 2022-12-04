@@ -40,7 +40,6 @@ EXECUCAO:
     calcula first e follow e utilizando a tabela de analise sintatica e simulação da pilha. 
    Necessário:
        --gramatica  #Arquivo que descreve a gramática livre de contexto.
-       --sentenca  #Arquivo que contem as sentencas.
         """
         parser_lexico = subparsers.add_parser('lexico', help='lexico -h', description = descricao_lexema, formatter_class=argparse.RawTextHelpFormatter)
         parser_lexico.add_argument('opcao', metavar='opcao', choices=['PROJETO', 'EXECUCAO'], help='choices: {PROJETO,EXECUCAO}')
@@ -53,8 +52,9 @@ EXECUCAO:
         #Cria 'parser' para o sub-command 'sintatico' 
         parser_sintatico = subparsers.add_parser('sintatico', help='sintatico -h', description = descricao_ll, formatter_class=argparse.RawTextHelpFormatter)
         parser_sintatico.add_argument('opcao', metavar='opcao', choices=['EXECUCAO'], help='choices: {EXECUCAO}')
-        parser_sintatico.add_argument('-g','--gramatica', metavar='',type=str, help='arquivo de input (default: ./data/gramatica.txt)')
-        parser_sintatico.add_argument('-s','--sentenca', metavar='',type=str, help='arquivo de input (default: ./data/sentenca.txt)')
+        parser_sintatico.add_argument('-g','--gramatica', metavar='',type=str, help='arquivo de entrada (default: ./data/gramatica.txt)')
+        parser_sintatico.add_argument('-s','--sentenca', metavar='',type=str, help='arquivo de entrada (default: ./data/sentenca.txt)')
+        parser_sintatico.add_argument('-t','--tokens', metavar='',type=str, help='arquivo de entrada')
         parser_sintatico.add_argument('-o','--output', metavar='',type=str,help='diretorio de saida (default: ./data)')
 
         return  parser.parse_args()
@@ -141,6 +141,18 @@ def LerPalavrasReservadas(input):
     ref_arquivo.close()
     return dic
 
+#Retorna tokens
+def lerTokens(input):
+    ref_arquivo = open(input,"r")
+    string = ''
+    for value in ref_arquivo:
+        value = value.rstrip('\n').strip().split(':')
+        string += str(value[0]) + ' '
+
+    ref_arquivo.close()
+
+    return [string.strip() + '\n']
+
 #Retorna lista de ojetos AF
 def erParaAFD(ERs, output):
         AFDs = []
@@ -184,35 +196,28 @@ def verificarLexemas(af,l):
 
 #Retorna tokens e lexemas encontrados
 def buscarTokens(lexemas, tokens_lexemas):
-    dic = {}
+    tokens = []
     for lexema in lexemas:  
         id = True
         for token in tokens_lexemas:
            if lexema in tokens_lexemas[token]:
-                if token in dic.keys():
-                     dic[token] = dic[token] + [lexema]
-                else:
-                     dic[token] = [lexema]
-
+                tokens.append(f'{token}: {lexema}')
                 id = False
                 break
            
-        if id:              
-            if 'ID' in dic.keys():
-                dic['ID'] = dic['ID'] + [lexema]
-            else:
-                dic['ID'] = [lexema]
+        if id: tokens.append(f'id: {lexema}')
              
-    return dic
+    return tokens
 
 #Escreve arquivo com tokens e lexemas:
 def escreverTokens(tokens_lexemas, output):
-     ref_arquivo = open(f'{output}/tokens.txt', "w")
+    ref_arquivo = open(f'{output}/tokens.txt', "w")
 
-     for token in tokens_lexemas.keys():
-          for lexema in tokens_lexemas[token]:
-            string = token + ':' + lexema
-            ref_arquivo.write(str(string) + "\n")
+    for token in tokens_lexemas:
+        ref_arquivo.write(str(token) + "\n")
+    
+    
+    ref_arquivo.close()
                
      
 def main():
@@ -242,8 +247,6 @@ def main():
             #default --palavras
             if not args.palavras: args.palavras = './data/palavras_reservadas.txt'
 
-            program = './data/programa.txt'
-
             #Ler lexemas
             lexemas = lerLexemas(args.programa)
             #Testar todos os lexemas no AFD
@@ -264,14 +267,19 @@ def main():
             #Lê Gramática do arquivo
             gramatica = GLC.lerGramatica(args.gramatica)
 
-            #Elimina recursão a esquerda
-            gramatica = GLC.eliminaRecursaoEsquerda(gramatica)
-
             #Fatora gramática
             gramatica = GLC.fatora(gramatica)
-
+            
+            #Elimina recursão a esquerda
+            gramatica = GLC.eliminaRecursaoEsquerda(gramatica)
+            
+            sentencas = None
             #Ler sentencas
-            sentencas = lerSentencas(args.sentenca)
+            if args.tokens:
+                sentencas = lerTokens(args.tokens)
+            else:
+                sentencas = lerSentencas(args.sentenca)
+
             for sentenca in sentencas:
                 print(f"Sentença: {sentenca}")
                 print('\nEntrada válida!\n\n' if gramatica.lerEntradaLL(sentenca) else '\nEntrada inválida!\n\n')

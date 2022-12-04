@@ -136,9 +136,11 @@ class GLC:
   def constroiTabelaLL(self):
     """Gera a tabela de análise preditivo LL(1)"""
 
-    gramatica = GLC.eliminaRecursaoEsquerda(GLC.fatora(self))
+    
+    gramatica = self
     gramatica.calculaConjuntoFollow()
 
+    
     for n in gramatica.N:
       if any(producao == ['&'] for producao in gramatica.producoes[(n, )]):
         if set(gramatica.firsts[n]) & set(gramatica.follows[n]):
@@ -159,7 +161,7 @@ class GLC:
           
           if '&' not in firsts:
             break
-
+    
     gramatica.tabelaLL = tabela
     cabecalhos = ["  "]
     linhas = []
@@ -189,6 +191,7 @@ class GLC:
         print(f"| {i}\t\t", end="")
       print()
 
+   
     return gramatica
 
   def lerEntradaLL(self, input):
@@ -200,13 +203,14 @@ class GLC:
     input: str
       valor da input
     """
-
+    
     input = input.split()
     input += ['$']
 
     gramatica = self
     if not self.tabelaLL:
       gramatica = self.constroiTabelaLL()
+      
 
     pilha = ['$', gramatica.N[0]]
     lePilha = input.pop(0)
@@ -244,6 +248,7 @@ class GLC:
 
   @staticmethod
   def fatora(gramatica):
+    
     """
     Remove a ambiguidade em produções da gramática
     
@@ -286,7 +291,7 @@ class GLC:
       visitados: list
         lista de não terminais já visitados
       """
-
+      
       while True:
         lr = [prod for prod in producoes if prod[0] in gramatica.N and prod[0] not in visitados] # Produções com ambiguidade indireta
         nr = [prod for prod in producoes if prod[0] not in gramatica.N or prod[0] in visitados]  # Produções sem ambiguidade indireta
@@ -298,10 +303,10 @@ class GLC:
         else:
           break
       return nr
-
+    
     if not gramatica.isGLC():
       raise Exception('A gramática deve ser livre de contexto!')
-
+    
     producoesAntigas = gramatica.producoes
     contador = 0
     limite = 100
@@ -318,7 +323,7 @@ class GLC:
         break
       else:
         producoesAntigas = novasProducoes
-
+    
     while True:
       novasProducoes = dict()
       for ((nt,), producoes) in producoesAntigas.items():
@@ -332,11 +337,12 @@ class GLC:
       if contador >= limite:
         raise Exception('Limite de execuções atingido! Talvez a gramática seja inerentemente ambígua...')
 
+
       if novasProducoes == producoesAntigas:
         break
       else:
         producoesAntigas = novasProducoes
-
+    
     return GLC(novasProducoes)
 
   @staticmethod
@@ -359,7 +365,7 @@ class GLC:
       producoes: list
         lista de produções de um não terminal
       """
-
+      
       novasProducoes = dict()
       lr = [prod for prod in producoes if nt == prod[0]]  # Produções com recursão direta à esquerda
       nr = [prod for prod in producoes if nt != prod[0]]  # Produções sem recursão
@@ -386,7 +392,6 @@ class GLC:
       contador [default=0]: int
         contador de execuções
       """
-
       while True:
         lr = [prod for prod in producoes if prod[0] in visitados]     # Produções com recursão indireta
         nr = [prod for prod in producoes if prod[0] not in visitados] # Produções sem recursão indireta

@@ -1,7 +1,11 @@
-IN: FOR | WHILE
-OP: IF
-COMP: (MENOR | MAIOR)?IGUAL | (DIFERENTE | (MAIOR | MENOR))
-AT: RECEBE
-SUM: MAIS | MENOS
-NUM: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
-ID: (a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z)*(1|2|3|4|5|6|7|8|9)*
+program: PROGRAM
+while: WHILE
+for: FOR
+if: IF
+comp: (MENOR | MAIOR)?IGUAL | (DIFERENTE | (MAIOR | MENOR))
+at: RECEBE
+sum: MAIS | MENOS
+num: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
+id: (a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z)*(1|2|3|4|5|6|7|8|9)*
+end: END
+;: ;

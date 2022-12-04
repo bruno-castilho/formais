@@ -1,3 +1,11 @@
-S -> a b A
-A -> a A | b A | B
-B -> b a
+S -> program id A end | &
+A -> B A | B
+B -> for C B end | while F B end  | if F B end | D B | &
+C -> id at num F G
+D -> id at E ; | G ; 
+E -> F | I
+F -> id comp H
+G -> id sum sum
+H -> id | num
+I -> H sum H J | H sum H
+J -> sum H J | sum H 

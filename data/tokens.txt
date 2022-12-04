@@ -1,27 +1,48 @@
-IN:FOR
-IN:WHILE
-ID:i
-ID:i
-ID:i
-ID:print
-ID:i
-ID:i
-ID:i
-ID:print
-ID:teste1
-ID:i
-AT:RECEBE
-AT:RECEBE
-NUM:0
-NUM:9
-NUM:8
-NUM:0
-NUM:0
-COMP:MENORIGUAL
-COMP:MAIOR
-COMP:IGUAL
-SUM:MAIS
-SUM:MAIS
-SUM:MENOS
-SUM:MENOS
-OP:IF
+program: PROGRAM
+id: meuprograma
+for: FOR
+id: i
+at: RECEBE
+num: 0
+id: i
+comp: MENORIGUAL
+num: 9
+id: i
+sum: MAIS
+sum: MAIS
+id: print
+id: i
+;: ;
+end: END
+id: teste1
+at: RECEBE
+id: teste1
+sum: MAIS
+num: 8
+sum: MAIS
+num: 2
+;: ;
+id: teste2
+at: RECEBE
+id: teste1
+comp: MENOR
+num: 9
+;: ;
+while: WHILE
+id: i
+comp: MAIOR
+num: 0
+if: IF
+id: i
+comp: IGUAL
+num: 0
+id: print
+id: teste1
+;: ;
+end: END
+id: i
+sum: MENOS
+sum: MENOS
+;: ;
+end: END
+end: END
