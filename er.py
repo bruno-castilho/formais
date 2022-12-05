@@ -6,7 +6,7 @@ class ER:
         self.subistituiSimbulos()
         self.colocarConcatenacao()
         self.er += '.#'
-        
+
     def subistituiSimbulos(self):
         """Troca operações ? + para seus equivalentes
             a? = (a | &)
@@ -15,8 +15,8 @@ class ER:
         string = ''
         for i in range(len(self.er)):
             symbol = self.er[i]
-            if symbol in ['+',  '?']:
-                esp = self.parenteseReverse([i-1])
+            if symbol in ['+', '?']:
+                esp = self.parenteseReverse([i - 1])
                 if symbol == '+':
                     string = string[:-len(esp)] + esp + esp + '*'
                 else:
@@ -25,7 +25,7 @@ class ER:
                 string += symbol
         self.er = string
 
-    def parenteseReverse(self,index):
+    def parenteseReverse(self, index):
         if self.er[index[0]] != ')':
             return self.er[index[0]]
 
@@ -40,22 +40,22 @@ class ER:
                     return string
 
         return None
-                 
+
     def colocarConcatenacao(self):
         string = ''
-        for i in range(len(self.er)-1):
+        for i in range(len(self.er) - 1):
             symbol = self.er[i]
             string += symbol
             if symbol not in ['|', '.', '(']:
-                if self.er[i+1] not in ['|', '*', '.', ')']:
+                if self.er[i + 1] not in ['|', '*', '.', ')']:
                     string += '.'
 
         string += self.er[-1]
 
         self.er = string
- 
+
     def getEr(self):
-        return self.er 
+        return self.er
 
     def getNome(self):
         return self.nome

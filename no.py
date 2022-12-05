@@ -1,5 +1,5 @@
 class No:
-    def __init__(self,nome, filhos=[]):
+    def __init__(self, nome, filhos=[]):
         self.nome = nome
         self.filhos = filhos
 
@@ -8,9 +8,9 @@ class No:
 
         self.firstpos = None
         self.lastpos = None
-        
+
         self.followpos = set()
-    
+
     def visualizar(self):
         if len(self.filhos) == 0:
             return f"{self.nome}({self.nulo})"
@@ -33,9 +33,9 @@ class No:
             self.nulo = self.filhos[0].verifica_nulo() and self.filhos[1].verifica_nulo()
         else:
             self.nulo = False
-        
+
         return self.nulo
-    
+
     # Calcula firstpos
     def calcula_firstpos(self):
         if self.firstpos is not None:  # Verifica se firstpos já foi calculado
@@ -46,7 +46,7 @@ class No:
             self.firstpos = set()
         elif self.nome == '|':
             self.firstpos = self.filhos[0].calcula_firstpos().union(self.filhos[1].calcula_firstpos())
-            
+
         elif self.nome == '.':
             if self.filhos[0].verifica_nulo():
                 self.firstpos = self.filhos[0].calcula_firstpos().union(self.filhos[1].calcula_firstpos())
@@ -56,12 +56,12 @@ class No:
             self.firstpos = self.filhos[0].calcula_firstpos()
         else:
             self.firstpos = set([self])
-        
+
         return self.firstpos
-    
+
     # Calcula lastpos
     def calcula_lastpos(self):
-        if self.lastpos is not None:   # Verifica de lastpos já foi calculado
+        if self.lastpos is not None:  # Verifica de lastpos já foi calculado
             return self.lastpos
 
         # Calcula lastpos
@@ -78,21 +78,19 @@ class No:
             self.lastpos = self.filhos[0].calcula_lastpos()
         else:
             self.lastpos = set([self])
-        
+
         return self.lastpos
-    
+
     # Calcula followpos
     def calcula_followpos(self):
-        for filhos in self.filhos: # Faz busca em profundidade para calcular followpos
+        for filhos in self.filhos:  # Faz busca em profundidade para calcular followpos
             filhos.calcula_followpos()
-        
-        if self.nome == '.': # Se é nó concatenação
-            for i in self.filhos[0].calcula_lastpos(): # Para cada posição i em lastpos
+
+        if self.nome == '.':  # Se é nó concatenação
+            for i in self.filhos[0].calcula_lastpos():  # Para cada posição i em lastpos
                 # Todas as posições em firstpos estão em followpos
                 i.followpos = i.followpos.union(self.filhos[1].calcula_firstpos())
         elif self.nome == '*':  # Se é nó fechamento
             for i in self.calcula_lastpos():
                 # Todas as posições em firstpos estão em followpos
                 i.followpos = i.followpos.union(self.calcula_firstpos())
-
-

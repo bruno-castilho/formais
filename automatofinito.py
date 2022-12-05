@@ -1,12 +1,12 @@
 class AutomatoFinito:
     def __init__(self, K=[], sigma=[], delta=[], s=None, F=[], nome=''):
-        self.K = K # Todos os estados
-        self.sigma = sigma # Simbolos de entrada
-        self.delta = delta # Transicoes
-        self.s = s # Estado inicial
-        self.F = F # Estados finais
-        self.nome = nome # nome
-  
+        self.K = K  # Todos os estados
+        self.sigma = sigma  # Simbolos de entrada
+        self.delta = delta  # Transicoes
+        self.s = s  # Estado inicial
+        self.F = F  # Estados finais
+        self.nome = nome  # nome
+
     def exporta(self, arquivo):
         """Exporta o Autômato para um arquivo
 
@@ -23,16 +23,15 @@ class AutomatoFinito:
 
         elementos_f = ""
         for f in self.F:
-            elementos_f += f + "," 
+            elementos_f += f + ","
         arq.write(elementos_f[:-1] + "\n")
 
         elementos_sigma = ""
         for s in self.sigma:
-            elementos_sigma += s + "," 
+            elementos_sigma += s + ","
         arq.write(elementos_sigma[:-1] + "\n")
-        
 
-        #Agrupa transições não deterministicas
+        # Agrupa transições não deterministicas
         novas_transicoes = []
         for transicao in self.delta:
             nova = True
@@ -47,7 +46,7 @@ class AutomatoFinito:
         for tr in novas_transicoes:
             arq.write(f"{tr[0]},{tr[1]},{tr[2]}")
             arq.write("\n")
-            
+
         arq.close()
 
     def getTransicao(self, estado, simbolo):
@@ -95,7 +94,7 @@ class AutomatoFinito:
                     continue
 
                 novo_estado = []
-                for estado in k: 
+                for estado in k:
                     for t in self.getTransicao(estado, simbolo):
                         if t not in novo_estado:
                             novo_estado.append(t)
@@ -141,13 +140,13 @@ class AutomatoFinito:
 
     def getEpsilon(self, estado):
         # Retorna transições por epsilon a partir de estado
-        for e in estado: # Para cada estado
+        for e in estado:  # Para cada estado
             transicao_epsilon = self.getTransicao(e, '&')
-            for t in transicao_epsilon: # Para cada transição por epsilon
-                if t not in estado: # Se o estado não estiver na lista de estados
-                    estado.append(t) # Adiciona o estado na lista
+            for t in transicao_epsilon:  # Para cada transição por epsilon
+                if t not in estado:  # Se o estado não estiver na lista de estados
+                    estado.append(t)  # Adiciona o estado na lista
         return estado
-    
+
     def getNome(self):
         return self.nome
 
@@ -160,15 +159,15 @@ class AutomatoFinito:
             af.s = af.s + ';'
             for i in range(len(af.K)):
                 af.K[i] = af.K[i] + ';'
-            
+
             for i in range(len(af.F)):
-                af.F[i] = af.F[i] + ';'    
+                af.F[i] = af.F[i] + ';'
 
             for i in range(len(af.delta)):
-                af.delta[i][0] = af.delta[i][0] + ';'  
+                af.delta[i][0] = af.delta[i][0] + ';'
                 af.delta[i][2] = af.delta[i][2] + ';'
 
-        #Remove estados mortos
+        # Remove estados mortos
         for estado in self.K:
             remover = True
             for transicao in self.delta:
@@ -179,25 +178,24 @@ class AutomatoFinito:
             if remover:
                 self.K.remove(estado)
 
-                
-        #Renomeia
+        # Renomeia
         i = 0
 
         suja_estados(self)
 
         for estado in self.K:
-                self.s = self.s.replace(estado, lether + str(i))
-                self.K = list(map(lambda x: x.replace(estado, lether + str(i)), self.K))
-                self.F = list(map(lambda x: x.replace(estado, lether + str(i)), self.F))
+            self.s = self.s.replace(estado, lether + str(i))
+            self.K = list(map(lambda x: x.replace(estado, lether + str(i)), self.K))
+            self.F = list(map(lambda x: x.replace(estado, lether + str(i)), self.F))
 
-                delta = []
-                for d in self.delta:
-                    d = list(map(lambda x: x.replace(estado, lether + str(i)), d))
-                    delta.append(d)
-                
-                self.delta = delta
+            delta = []
+            for d in self.delta:
+                d = list(map(lambda x: x.replace(estado, lether + str(i)), d))
+                delta.append(d)
 
-                i+=1
+            self.delta = delta
+
+            i += 1
 
     def getTransicoesEpslon(self, state):
         """Retorna transições por epsilon a partir de 'state'"""
@@ -206,19 +204,18 @@ class AutomatoFinito:
             for t in epsilonTransition:
                 if t not in state:
                     state.append(t)
-        return state               
+        return state
 
     def computar(self, input):
         """Reconhecimento de sentença pelo AF"""
         entrada = input
-        currentStates = []
-        currentStates.append(self.s)
+        currentStates = [self.s]
         currentStates.extend(self.getTransicoesEpslon(currentStates))
         while len(entrada) > 0:
             symbol = entrada[0]
             entrada = entrada[1:]
             nextStates = []
-            
+
             for state in currentStates:
                 transition = self.getTransicao(state, symbol)
                 transition.extend(self.getTransicoesEpslon(transition))
@@ -228,11 +225,3 @@ class AutomatoFinito:
             if state in self.F:
                 return True
         return False
-            
-
-
-        
-                
-
-        
-        
