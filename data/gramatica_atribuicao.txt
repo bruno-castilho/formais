@@ -1,0 +1,3 @@
+S -> A END S | &
+A -> id EQ B
+B -> string | integer
